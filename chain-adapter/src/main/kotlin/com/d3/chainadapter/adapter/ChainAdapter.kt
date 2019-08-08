@@ -8,7 +8,6 @@ package com.d3.chainadapter.adapter
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
 import com.d3.commons.sidechain.iroha.IrohaChainListener
-import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
 import com.d3.commons.sidechain.provider.LastReadBlockProvider
@@ -27,6 +26,7 @@ import java.io.Closeable
 import java.math.BigInteger
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.system.exitProcess
 
 private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
 
@@ -57,16 +57,16 @@ class ChainAdapter(
         // Handle connection errors
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
             override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {
-                ReliableIrohaChainListener.logger.error("RMQ connection error", exception)
-                System.exit(1)
+                logger.error("RMQ connection error", exception)
+                exitProcess(1)
             }
 
             override fun handleUnexpectedConnectionDriverException(
                 conn: Connection,
                 exception: Throwable
             ) {
-                ReliableIrohaChainListener.logger.error("RMQ connection error", exception)
-                System.exit(1)
+                logger.error("RMQ connection error", exception)
+                exitProcess(1)
             }
         }
         connectionFactory.host = chainAdapterConfig.rmqHost

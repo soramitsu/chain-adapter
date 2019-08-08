@@ -1,0 +1,108 @@
+/*
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        // gradle plugins repository
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
+    }
+}
+plugins {
+    id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
+}
+
+apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'application'
+
+mainClassName = 'com.d3.chainadapter.ChainAdapterMain'
+group 'com.d3.chainadapter'
+
+dependencies {
+    compile "com.github.d3ledger.notary:notary-commons:$notary_version"
+}
+
+shadowDistZip.classifier = 'shadow'
+shadowDistTar.classifier = 'shadow'
+// name of jar file that the shadowJar plugin generates
+shadowJar.archiveName = 'app.jar'
+
+// sora-plugin configs
+soramitsu {
+    projectGroup = 'd3-deploy'
+    docker {
+        // docker tag
+        tag = System.getenv("TAG")
+        // jar file that is used in the generated Dockerfile
+        jar = new File("build/libs/app.jar")
+        // the rest in configured using env variables
+    }
+}
+
+sourceSets {
+    integrationTest {
+        kotlin {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDirs += 'src/integration-test/kotlin'
+        }
+        resources {
+            srcDirs = ["src/integration-test/resources"]
+        }
+    }
+}
+
+task integrationTest(type: Test) {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    description = 'Runs chain-adapter integration tests'
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    // Enable JUnit5 tests
+    useJUnitPlatform {
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+task runIrohaChainAdapter(type: JavaExec) {
+    main = 'com.d3.chainadapter.ChainAdapterMain'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    compile group: 'org.springframework', name: 'spring-context', version: '5.1.4.RELEASE'
+    testCompile "com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version"
+    compile project(":chain-adapter-client")
+    // unit tests
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
+    // https://mvnrepository.com/artifact/org.mockito/mockito-all
+    testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
+    testCompile('com.nhaarman:mockito-kotlin:1.5.0') {
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.mockito'
+    }
+    // to run both junit4 and junit5 tests
+    testRuntime("org.junit.vintage:junit-vintage-engine:5.2.0")
+}
+
+project.afterEvaluate {
+    dockerfileCreate.dependsOn(shadowJar)
+    integrationTest.dependsOn(dockerfileCreate)
+    test.finalizedBy(integrationTest)
+}

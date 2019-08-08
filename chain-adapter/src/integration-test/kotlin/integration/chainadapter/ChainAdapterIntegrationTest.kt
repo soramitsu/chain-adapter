@@ -6,7 +6,8 @@
 package integration.chainadapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
-import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
+import com.d3.chainadapter.client.ReliableIrohaChainListener
+import com.d3.chainadapter.client.ReliableIrohaChainListener4J
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.commons.util.getRandomString
 import com.github.kittinunf.result.failure
@@ -157,6 +158,53 @@ class ChainAdapterIntegrationTest {
             }
         }
     }
+
+    /**
+     * Note: Iroha must be deployed to pass the test.
+     * @given running chain-adapter and ReliableIrohaChainListener4J
+     * @when new transactions appear in Iroha blockchain and consumer acknowledges every transaction manually
+     * @then RabbitMQ consumer reads new transactions
+     * in the same order as they were published
+     */
+    @Test
+    fun testRuntimeBlocksManualAck4j() {
+        val transactions = 10
+        val queueName = String.getRandomString(5)
+        val consumedBlocks = Collections.synchronizedList(ArrayList<Long>())
+        environment.createAdapter().use { adapter ->
+            adapter.init {}.failure { ex -> throw ex }
+            ReliableIrohaChainListener4J(
+                environment.mapToRMQConfig(adapter.chainAdapterConfig),
+                queueName,
+                createPrettySingleThreadPool(
+                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
+                ),
+                false,
+                {}
+            ).use { reliableChainListener ->
+                reliableChainListener.getBlockObservable().subscribe { subscription ->
+                    consumedBlocks.add(subscription.block.blockV1.payload.height)
+                    subscription.acknowledgment.ack()
+                }
+                //Start consuming
+                reliableChainListener.listen()
+                repeat(transactions) {
+                    environment.createDummyTransaction()
+                }
+                //Wait a little until consumed
+                Thread.sleep(2_000)
+                logger.info { consumedBlocks }
+                assertEquals(transactions, consumedBlocks.size)
+                assertEquals(consumedBlocks.sorted(), consumedBlocks)
+                assertEquals(
+                    adapter.getLastReadBlock(),
+                    adapter.lastReadBlockProvider.getLastBlockHeight()
+                )
+                assertEquals(consumedBlocks.last(), adapter.getLastReadBlock().toLong())
+            }
+        }
+    }
+
 
     /**
      * Logger
