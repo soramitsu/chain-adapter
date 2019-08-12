@@ -30,8 +30,8 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME ==~ /(master|develop)/ || env.TAG_NAME) {
                         DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
-                        withCredentials([usernamePassword(credentialsId: 'nexus-d3-docker', usernameVariable: 'login', passwordVariable: 'password')]) {
-                          env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19002"
+                        withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'login', passwordVariable: 'password')]) {
+                          env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19004"
                           env.DOCKER_REGISTRY_USERNAME = "${login}"
                           env.DOCKER_REGISTRY_PASSWORD = "${password}"
                           env.TAG = env.TAG_NAME ? env.TAG_NAME : DOCKER_TAGS[env.BRANCH_NAME]
