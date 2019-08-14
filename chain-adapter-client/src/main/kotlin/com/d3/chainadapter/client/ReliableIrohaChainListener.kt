@@ -186,6 +186,7 @@ open class ReliableIrohaChainListener @JvmOverloads constructor(
         consumerTag?.let {
             channel.basicCancel(it)
         }
+        conn.close()
         consumerExecutorService.shutdownNow()
     }
 
