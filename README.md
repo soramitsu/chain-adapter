@@ -32,22 +32,23 @@ rmq:
     - 5672:5672
 
 chain-adapter:
-  image: nexus.iroha.tech:19002/d3-deploy/chain-adapter:develop
+  image: nexus.iroha.tech:19004/soramitsu/chain-adapter:develop
   container_name: chain-adapter
   restart: on-failure
   depends_on:
     - iroha
     - rmq
   volumes:
-    - ../your change adapter storage/:/deploy/chain-adapter
+    - ..{your chain adapter storage}:/deploy/chain-adapter
 ```
   
 ## How to use
-`com.d3.chainadapter.client.ReliableIrohaChainListener` is the class used as a client for the service. The class may be obtained via JitPack:
+`com.d3.chainadapter.client.ReliableIrohaChainListener` is the class used as a client for the service. The class may be obtained via [Jitpack](https://jitpack.io/#soramitsu/chain-adapter):
 
 ```groovy
-compile "com.github.d3ledger.chain-adapter:chain-adapter-client:$chain_adapter_client_version"
+compile "com.github.soramitsu.chain-adapter:chain-adapter-client:$chain_adapter_client_version"
 ``` 
+
 Typical workflow looks like this:
 
 1) First, you must create an instance of `ReliableIrohaChainListener` object. 
