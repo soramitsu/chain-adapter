@@ -3,4 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-rootProject.name = 'chain-adapter'
+rootProject.name = 'chain-adapter-root'
+
+include 'chain-adapter'
+project(':chain-adapter').projectDir = 'chain-adapter' as File
+
+include 'chain-adapter-client'
+project(':chain-adapter-client').projectDir = 'chain-adapter-client' as File

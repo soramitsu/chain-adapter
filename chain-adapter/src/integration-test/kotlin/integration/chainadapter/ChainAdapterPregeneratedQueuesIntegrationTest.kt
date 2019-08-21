@@ -6,7 +6,7 @@
 package integration.chainadapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
-import com.d3.commons.sidechain.iroha.ReliableIrohaChainListener
+import com.d3.chainadapter.client.ReliableIrohaChainListener
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.failure
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment

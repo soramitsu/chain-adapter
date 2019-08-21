@@ -1,0 +1,38 @@
+/*
+ * Copyright D3 Ledger, Inc. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+buildscript {
+    ext.kotlin_version = '1.3.10'
+    repositories {
+        mavenCentral()
+        jcenter()
+        // gradle plugins repository
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+dependencies{
+    // Iroha Pure Java library
+    compile 'com.github.hyperledger.iroha-java:client:6.0.0'
+    // logging
+    compile 'io.github.microutils:kotlin-logging:1.4.9'
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.8.0-beta2'
+    // for Result
+    compile group: 'com.github.kittinunf.result', name: 'result', version: '1.4.0'
+    compile 'org.projectlombok:lombok:1.18.8'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url = 'https://dl.bintray.com/kotlin/ktor' }
+    maven { url 'https://jitpack.io' }
+}
+
+group 'com.d3.chainadapter'

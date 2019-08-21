@@ -14,6 +14,7 @@ import com.github.kittinunf.result.map
 import mu.KLogging
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.ComponentScan
+import kotlin.system.exitProcess
 
 private val logger = KLogging().logger
 const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
@@ -31,7 +32,7 @@ fun main() {
         val adapter = context.getBean(ChainAdapter::class.java)
         adapter.init {
             logger.error("Iroha failure. Exit.")
-            System.exit(1)
+            exitProcess(1)
         }.fold(
             { logger.info("Chain-adapter has been started") },
             { ex ->
@@ -40,6 +41,6 @@ fun main() {
             })
     }.failure { ex ->
         logger.error("Cannot start chain-adapter", ex)
-        System.exit(1)
+        exitProcess(1)
     }
 }
