@@ -20,17 +20,10 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves the last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
 - `chain-adapter.irohaCredential` - credentials of the account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
 
-## How to run
+## How to run the service
 Chain-adapter may be run as a docker container using the following `docker-compose` instructions:
 
 ```
-rmq:
-  image: rabbitmq:3-management
-  container_name: rmq
-  ports:
-    - 8181:15672
-    - 5672:5672
-
 chain-adapter:
   image: nexus.iroha.tech:19004/soramitsu/chain-adapter:develop
   container_name: chain-adapter
@@ -39,10 +32,24 @@ chain-adapter:
     - iroha
     - rmq
   volumes:
-    - ..{your chain adapter storage}:/deploy/chain-adapter
+    - {chain adapter storage}:/deploy/chain-adapter
+
+rmq:
+  image: rabbitmq:3-management
+  container_name: rmq
+  hostname: rmq
+  volumes:
+    - {rabbitmq data storage}:/var/lib/rabbitmq/mnesia/
+  ports:
+    - 15672:15672
+    - 5672:5672
 ```
+### Ports and volumes
+The service uses port `15672` for RabbitMQ web-client(password:guest, login:guest) and port `5672` as the main AMQP port.
+You also have to specify two volumes:`rabbitmq data storage` and `chain adapter storage`. 
+The first volume is used to persist RabbitMQ messages, while the latter is used to save the very last block number processed by the chain adapter. 
   
-## How to use
+## How to use the client
 `com.d3.chainadapter.client.ReliableIrohaChainListener` is the class used as a client for the service. The class may be obtained via [Jitpack](https://jitpack.io/#soramitsu/chain-adapter):
 
 ```groovy
