@@ -5,7 +5,17 @@
 
 buildscript {
     ext.kotlin_version = '1.3.10'
-    ext.notary_version = '63c489ce3707119317c25bb52660f86bb46b713d'
+    ext.ktor_version = '1.0.0'
+    ext.spring_boot_version = '1.5.19.RELEASE'
+    ext.springfoxSwagger2Version = '2.9.2'
+    ext.springBootVersion = '2.1.3.RELEASE'
+    ext.kotlinVersion = '1.3.10'
+    ext.notary_version = '1a605fee92f53b55d074f87787c2ceca9acec687'
+    ext.d3EthVersion = '20f8c7db4bac3c8e17f6401301a5a5adde46b461'
+    ext.chain_adapter_client_version = 'd63c4af76aa589fbc545e1859122f66764771b64'
+    ext.changelog_version = '0.0.2'
+    ext.iroha_java_version = '6.1.0'
+
     repositories {
         mavenCentral()
         jcenter()
@@ -13,43 +23,119 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
+        //Spring-boot
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.1.0'
     }
 }
 
 plugins {
-    id "com.github.dolgopolovwork.testreport" version "1"
+    id 'jp.co.soramitsu.sora-plugin' version '0.1.2'
 }
 
-testReport {
-    testFolders = Arrays.asList("chain-adapter/src/integration-test")
+group = 'd3'
+version = '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'application'
+apply plugin: "kotlin-spring" // See https://kotlinlang.org/docs/reference/compiler-plugins.html#kotlin-spring-compiler-plugin
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'maven'
+
+mainClassName = "jp.co.soramitsu.bootstrap.BootstrapMain"
+shadowDistZip.classifier = 'shadow'
+shadowDistTar.classifier = 'shadow'
+// name of jar file that the shadowJar plugin generates
+shadowJar.archiveName = 'app.jar'
+
+// sora-plugin configs
+soramitsu {
+    projectGroup = 'd3-deploy'
+    docker {
+        // docker tag
+        tag = System.getenv("DOCKER_TAG")
+        // jar file that is used in the generated Dockerfile
+        jar = new File("build/libs/app.jar")
+        // the rest in configured using env variables
+    }
 }
 
-allprojects {
-    apply plugin: 'kotlin'
-    apply plugin: 'maven'
-
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-        compile "com.rabbitmq:amqp-client:5.6.0"
-    }
-    
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven { url = 'https://dl.bintray.com/kotlin/ktor' }
-        maven { url 'https://jitpack.io' }
-    }
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
+shadowJar {
+    zip64 true
 }
 
-project.afterEvaluate {
-    test.finalizedBy(d3TestReport)
+repositories {
+    mavenCentral()
+    // for Ktor
+    jcenter()
+    maven { url = 'https://dl.bintray.com/kotlin/ktor' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation("com.github.d3ledger.notary:notary-commons:$notary_version")
+    implementation("com.github.d3ledger.d3-eth:eth:$d3EthVersion")
+    implementation("com.github.soramitsu.chain-adapter:chain-adapter-client:$chain_adapter_client_version")
+
+    // kotlin related
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1'
+    testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+
+    //Iroha-java related
+    implementation("com.github.warchant:ed25519-sha3-java:2.0.1")
+    implementation("com.github.hyperledger.iroha-java:client:$iroha_java_version")
+    implementation("com.github.hyperledger.iroha-java:testcontainers:$iroha_java_version")
+
+    //Spring-boot
+    implementation("org.springframework.boot:spring-boot-starter:$springBootVersion") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    implementation("org.springframework.boot:spring-boot-starter-web:$springBootVersion") {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'org.hibernate'
+    }
+    implementation "io.springfox:springfox-swagger2:$springfoxSwagger2Version"
+    implementation "io.springfox:springfox-swagger-ui:$springfoxSwagger2Version"
+
+    // Changelog interface
+    implementation("com.github.d3ledger.bootstrap-changelog:changelog-interface:$changelog_version")
+
+    //TODO this is very dirty hack. This dependency must be removed after migration to newer version of Spring Boot
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-validator
+
+    implementation 'org.hibernate:hibernate-validator:6.0.14.Final'
+
+    implementation "org.springframework.boot:spring-boot-starter-jetty:$springBootVersion"
+
+    implementation 'com.google.protobuf:protobuf-java-util:3.6.1'
+    implementation 'org.bitcoinj:bitcoinj-core:0.14.7'
+
+    //Web3j
+    implementation 'org.web3j:core:4.2.0'
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+sourceCompatibility = 1.8
+
+wrapper {
+    gradleVersion = 5.6
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+task runBootstrap(type: JavaExec) {
+    main = mainClassName
+    classpath = sourceSets.main.runtimeClasspath
 }
