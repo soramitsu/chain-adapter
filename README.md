@@ -7,11 +7,12 @@ The service is backed by RabbitMQ. All outgoing Iroha blocks are stored in the R
 Chain-adapter functionality may be used by utilizing the `com.d3.chainadapter.client.ReliableIrohaChainListener` class. The class and the service itself are written in Kotlin programming language that has great interoperability with Java.
 
 The service is fail-fast, i.e it dies whenever Iroha or RabbitMQ goes offline.
-## Configuration file overview
-Chain adapter uses `chain-adapter.properties` as a default configuration file that is located in `resources` folder inside the project. However, every configuration item could be changed through environmental variables. 
-
+## Server configuration file overview
+Chain adapter uses `chain-adapter.properties` as a default configuration file that is located in the `resources` folder inside the project(not in the project where the chain-adapter is used). However, every configuration item could be changed through environmental variables.
 - `chain-adapter.rmqHost` - RabbitMQ host
 - `chain-adapter.rmqPort` - RabbitMQ port
+- `chain-adapter.username` - RabbitMQ username(optional)
+- `chain-adapter.password` - RabbitMQ password(optional)
 - `chain-adapter.irohaExchange` - exchange name that is used to publish blocks
 - `chain-adapter.lastReadBlockFilePath` - the file that chain adapter uses to save the last read block height. This file is needed to publish missing blocks after restart. It's important to highlight that blocks that have lower height values won't be published.
 - `chain-adapter.healthCheckPort` - health check port
@@ -19,6 +20,8 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.iroha` - Iroha host and port configuration
 - `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves the last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
 - `chain-adapter.irohaCredential` - credentials of the account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
+
+The transformation to environmental variable is quite straightforward: uppercase every letter and change dot symbol(`.`) to underscore(`_`). For example, `chain-adapter.rmqHost` transforms to `CHAIN-ADAPTER_RMQHOST`.
 
 ## How to run the service
 Chain-adapter may be run as a docker container using the following `docker-compose` instructions:
