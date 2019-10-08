@@ -55,10 +55,13 @@ class ChainAdapter(
 
     init {
         if (chainAdapterConfig.username != null && chainAdapterConfig.password != null) {
-            logger.info("Authenticate user '${chainAdapterConfig.username}' with virtual host '${chainAdapterConfig.virtualHost}'")
+            logger.info("Authenticate user '${chainAdapterConfig.username}'")
             connectionFactory.password = chainAdapterConfig.password
             connectionFactory.username = chainAdapterConfig.username
-            connectionFactory.virtualHost = chainAdapterConfig.virtualHost
+            if (chainAdapterConfig.virtualHost != null) {
+                logger.info("Virtual host is '${chainAdapterConfig.virtualHost}'")
+                connectionFactory.virtualHost = chainAdapterConfig.virtualHost
+            }
         }
         // Handle connection errors
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
