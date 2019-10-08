@@ -31,7 +31,7 @@ interface ChainAdapterConfig {
     // Queues to create before starting consumer
     val queuesToCreate: String
     // RabbitMQ username. Optional
-    val username: String?
+    val username: String? get() = null
     // RabbitMQ password. Optional
-    val password: String?
+    val password: String? get() = null
 }
