@@ -8,7 +8,7 @@ Chain-adapter functionality may be used by utilizing the `com.d3.chainadapter.cl
 
 The service is fail-fast, i.e it dies whenever Iroha or RabbitMQ goes offline.
 ## Server configuration file overview
-Chain adapter uses `chain-adapter.properties` as a default configuration file that is located in the `resources` folder inside the project. However, every configuration item could be changed through environmental variables.
+Chain adapter uses `chain-adapter.properties` as a default configuration file that is located in the `resources` folder inside the project(not in the project where the chain-adapter is used). However, every configuration item could be changed through environmental variables.
 - `chain-adapter.rmqHost` - RabbitMQ host
 - `chain-adapter.rmqPort` - RabbitMQ port
 - `chain-adapter.username` - RabbitMQ username(optional)
