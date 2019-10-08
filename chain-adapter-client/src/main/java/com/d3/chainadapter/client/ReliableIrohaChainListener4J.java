@@ -25,19 +25,19 @@ public class ReliableIrohaChainListener4J implements Closeable {
      * @param irohaQueue              queue that will be bound to Iroha blocks exchange
      * @param consumerExecutorService executor that is used to execure RabbitMQ consumer code.
      * @param autoAck                 turns on/off auto acknowledgment mode
-     * @param onRQMFail               function that will be called on RabbitMQ failure
+     * @param onRMQFail               function that will be called on RabbitMQ failure
      */
     public ReliableIrohaChainListener4J(@NonNull RMQConfig rmqConfig,
                                         @NonNull String irohaQueue,
                                         @NonNull ExecutorService consumerExecutorService,
                                         boolean autoAck,
-                                        @NonNull Runnable onRQMFail) {
+                                        @NonNull Runnable onRMQFail) {
         reliableIrohaChainListener = new ReliableIrohaChainListener(
                 rmqConfig,
                 irohaQueue,
                 consumerExecutorService,
                 autoAck, () -> {
-            onRQMFail.run();
+            onRMQFail.run();
             return Unit.INSTANCE;
         });
     }

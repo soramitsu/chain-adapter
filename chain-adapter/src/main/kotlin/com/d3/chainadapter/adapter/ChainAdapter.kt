@@ -54,6 +54,11 @@ class ChainAdapter(
     private val lastReadBlock = AtomicReference<BigInteger>(BigInteger.ZERO)
 
     init {
+        if (chainAdapterConfig.username != null && chainAdapterConfig.password != null) {
+            logger.info("Authenticate user '${chainAdapterConfig.username}'")
+            connectionFactory.password = chainAdapterConfig.password
+            connectionFactory.username = chainAdapterConfig.username
+        }
         // Handle connection errors
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
             override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {
