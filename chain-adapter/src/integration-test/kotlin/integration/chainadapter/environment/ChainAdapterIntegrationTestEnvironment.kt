@@ -47,7 +47,10 @@ const val DEFAULT_RMQ_PORT = 5672
 /**
  * Chain adapter test environment
  */
-class ChainAdapterIntegrationTestEnvironment : Closeable {
+class ChainAdapterIntegrationTestEnvironment(
+    private val rmqUsername: String? = null,
+    private val rmqPassword: String? = null
+) : Closeable {
 
     val containerHelper = ContainerHelper()
     private val peerKeyPair = Ed25519Sha3().generateKeypair()
@@ -82,6 +85,11 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     private val dummyIrohaConsumer: IrohaConsumer
 
     init {
+        if (rmqPassword != null && rmqUsername != null) {
+            containerHelper.rmqContainer
+                .withEnv("RABBITMQ_DEFAULT_USER", rmqUsername)
+                .withEnv("RABBITMQ_DEFAULT_PASS", rmqPassword)
+        }
         containerHelper.rmqContainer.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
@@ -151,7 +159,9 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
     fun createAdapter(): OpenChainAdapter {
         val chainAdapterConfig = chainAdapterConfigHelper.createChainAdapterConfig(
             containerHelper.rmqContainer.containerIpAddress,
-            containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT)
+            containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT),
+            username = rmqUsername,
+            password = rmqPassword
         )
         val irohaAPI = irohaAPI()
         val lastReadBlockProvider = FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath)
@@ -222,6 +232,8 @@ class ChainAdapterIntegrationTestEnvironment : Closeable {
             override val host = chainAdapterConfig.rmqHost
             override val port = chainAdapterConfig.rmqPort
             override val irohaExchange = chainAdapterConfig.irohaExchange
+            override val username = rmqUsername
+            override val password = rmqPassword
         }
     }
 
