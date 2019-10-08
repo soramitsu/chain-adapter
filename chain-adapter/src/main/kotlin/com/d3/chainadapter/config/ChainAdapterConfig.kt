@@ -34,4 +34,6 @@ interface ChainAdapterConfig {
     val username: String? get() = null
     // RabbitMQ password. Optional
     val password: String? get() = null
+    // RabbitMQ virtual host. Optional
+    val virtualHost: String? get() = null
 }
