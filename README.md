@@ -13,6 +13,7 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.rmqPort` - RabbitMQ port
 - `chain-adapter.username` - RabbitMQ username(optional)
 - `chain-adapter.password` - RabbitMQ password(optional)
+- `chain-adapter.virtualHost` - RabbitMQ virtual host(optional)
 - `chain-adapter.irohaExchange` - exchange name that is used to publish blocks
 - `chain-adapter.lastReadBlockFilePath` - the file that chain adapter uses to save the last read block height. This file is needed to publish missing blocks after restart. It's important to highlight that blocks that have lower height values won't be published.
 - `chain-adapter.healthCheckPort` - health check port
