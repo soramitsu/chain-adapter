@@ -54,6 +54,15 @@ class ChainAdapter(
     private val lastReadBlock = AtomicReference<BigInteger>(BigInteger.ZERO)
 
     init {
+        if (chainAdapterConfig.username != null && chainAdapterConfig.password != null) {
+            logger.info("Authenticate user '${chainAdapterConfig.username}'")
+            connectionFactory.password = chainAdapterConfig.password
+            connectionFactory.username = chainAdapterConfig.username
+            if (chainAdapterConfig.virtualHost != null) {
+                logger.info("Virtual host is '${chainAdapterConfig.virtualHost}'")
+                connectionFactory.virtualHost = chainAdapterConfig.virtualHost
+            }
+        }
         // Handle connection errors
         connectionFactory.exceptionHandler = object : DefaultExceptionHandler() {
             override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {

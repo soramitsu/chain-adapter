@@ -17,7 +17,12 @@ class ChainAdapterConfigHelper {
     /**
      * Creates chain adapter config
      */
-    fun createChainAdapterConfig(rmqHost: String, rmqPort: Int): ChainAdapterConfig {
+    fun createChainAdapterConfig(
+        rmqHost: String,
+        rmqPort: Int,
+        username: String?,
+        password: String?
+    ): ChainAdapterConfig {
         val chainAdapterConfig = loadRawLocalConfigs(
             "chain-adapter",
             ChainAdapterConfig::class.java,
@@ -25,7 +30,7 @@ class ChainAdapterConfigHelper {
         )
         return object : ChainAdapterConfig {
             // No matter what port. Health check service will not be started in tests.
-            override val healthCheckPort=123
+            override val healthCheckPort = 123
             override val rmqHost = rmqHost
             override val rmqPort = rmqPort
             // Random exchange
@@ -35,6 +40,8 @@ class ChainAdapterConfigHelper {
             override val lastReadBlockFilePath = chainAdapterConfig.lastReadBlockFilePath
             override val dropLastReadBlock = true
             override val queuesToCreate = "q1 , q2, q3 ,   q4,  q5   "
+            override val username = username
+            override val password = password
         }
     }
 }

@@ -5,7 +5,7 @@
 
 buildscript {
     ext.kotlin_version = '1.3.10'
-    ext.notary_version = 'b44ce46930425da0efe6e129bca61068c899faee'
+    ext.notary_version = '63c489ce3707119317c25bb52660f86bb46b713d'
     repositories {
         mavenCentral()
         jcenter()
@@ -20,6 +20,7 @@ buildscript {
 }
 
 plugins {
+    id "org.sonarqube" version "2.7.1"
     id "com.github.dolgopolovwork.testreport" version "1"
 }
 
@@ -47,6 +48,19 @@ allprojects {
     }
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
+    }
+}
+
+allprojects {
+    sonarqube {
+        properties {
+            property "sonar.github.repository", "soramitsu/chain-adapter"
+            property "sonar.projectKey", "soramitsu:chain-adapter"
+            property "sonar.java.binaries", "${project.projectDir}/build/classes"
+            property "sonar.java.libraries", "${project.projectDir}/build/libs"
+            property "sonar.java.test.binaries", "${project.projectDir}/build/test-results/test/binary"
+            property "sonar.exclusions", "**/integration-test/**"
+        }
     }
 }
 

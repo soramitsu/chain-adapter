@@ -59,6 +59,11 @@ open class ReliableIrohaChainListener @JvmOverloads constructor(
     private var lastReadBlockNum: Long = DEFAULT_LAST_READ_BLOCK
 
     private val conn by lazy {
+        if (rmqConfig.username != null && rmqConfig.password != null) {
+            logger.info("Authenticate user '${rmqConfig.username}'")
+            factory.password = rmqConfig.password
+            factory.username = rmqConfig.username
+        }
         // Handle connection errors
         factory.exceptionHandler = object : DefaultExceptionHandler() {
             override fun handleConnectionRecoveryException(conn: Connection, exception: Throwable) {

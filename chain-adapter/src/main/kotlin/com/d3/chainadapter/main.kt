@@ -19,9 +19,7 @@ import kotlin.system.exitProcess
 private val logger = KLogging().logger
 const val CHAIN_ADAPTER_SERVICE_NAME = "chain-adapter"
 
-@ComponentScan(
-    basePackages = ["com.d3.chainadapter"]
-)
+@ComponentScan(basePackages = ["com.d3.chainadapter"])
 class ChainAdapterApp
 
 fun main() {
