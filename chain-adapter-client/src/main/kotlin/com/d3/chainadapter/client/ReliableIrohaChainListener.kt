@@ -26,17 +26,12 @@ private const val DEFAULT_LAST_READ_BLOCK = -1L
  * Rabbit MQ based Iroha block listener
  * @param rmqConfig - Rabbit MQ configuration
  * @param irohaQueue - name of queue to read Iroha blocks from
- * @param consumerExecutorService - executor that is used to execure RabbitMQ consumer code.
  * @param autoAck - enables auto acknowledgment
  * @param onRmqFail - function that will be called on RMQ failure. Terminates process by default.
  */
 open class ReliableIrohaChainListener @JvmOverloads constructor(
     private val rmqConfig: RMQConfig,
     private val irohaQueue: String,
-    private val consumerExecutorService: ExecutorService = createPrettySingleThreadPool(
-        "notary-commons",
-        "iroha-rmq-listener"
-    ),
     private val autoAck: Boolean = true,
     private val onRmqFail: () -> Unit = {
         logger.error("RMQ failure. Exit.")
@@ -44,12 +39,10 @@ open class ReliableIrohaChainListener @JvmOverloads constructor(
     }
 ) : Closeable {
 
-    constructor(
-        rmqConfig: RMQConfig,
-        irohaQueue: String,
-        autoAckExplicit: Boolean
-    ) : this(rmqConfig, irohaQueue, autoAck = autoAckExplicit)
-
+    private val consumerExecutorService: ExecutorService = createPrettySingleThreadPool(
+        "chain-adapter",
+        "iroha-rmq-listener"
+    )
     private val source = PublishSubject.create<Pair<BlockOuterClass.Block, () -> Unit>>()
     private val sharedSource = source.share()
     private val started = AtomicBoolean()

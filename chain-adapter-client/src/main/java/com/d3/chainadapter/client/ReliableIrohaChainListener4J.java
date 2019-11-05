@@ -10,8 +10,6 @@ import kotlin.Unit;
 import lombok.NonNull;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Class that wraps ReliableIrohaChainListener
@@ -21,21 +19,18 @@ public class ReliableIrohaChainListener4J implements Closeable {
     private final ReliableIrohaChainListener reliableIrohaChainListener;
 
     /**
-     * @param rmqConfig               RabbitMQ configuration
-     * @param irohaQueue              queue that will be bound to Iroha blocks exchange
-     * @param consumerExecutorService executor that is used to execure RabbitMQ consumer code.
-     * @param autoAck                 turns on/off auto acknowledgment mode
-     * @param onRMQFail               function that will be called on RabbitMQ failure
+     * @param rmqConfig  RabbitMQ configuration
+     * @param irohaQueue queue that will be bound to Iroha blocks exchange
+     * @param autoAck    turns on/off auto acknowledgment mode
+     * @param onRMQFail  function that will be called on RabbitMQ failure
      */
     public ReliableIrohaChainListener4J(@NonNull RMQConfig rmqConfig,
                                         @NonNull String irohaQueue,
-                                        @NonNull ExecutorService consumerExecutorService,
                                         boolean autoAck,
                                         @NonNull Runnable onRMQFail) {
         reliableIrohaChainListener = new ReliableIrohaChainListener(
                 rmqConfig,
                 irohaQueue,
-                consumerExecutorService,
                 autoAck, () -> {
             onRMQFail.run();
             return Unit.INSTANCE;
@@ -78,7 +73,7 @@ public class ReliableIrohaChainListener4J implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         reliableIrohaChainListener.close();
     }
 }
