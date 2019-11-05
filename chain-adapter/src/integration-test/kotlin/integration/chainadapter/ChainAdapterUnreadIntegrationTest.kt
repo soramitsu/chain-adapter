@@ -5,9 +5,7 @@
 
 package integration.chainadapter
 
-import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.client.ReliableIrohaChainListener
-import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.commons.util.getRandomString
 import com.github.kittinunf.result.failure
 import integration.chainadapter.environment.ChainAdapterIntegrationTestEnvironment
@@ -46,9 +44,6 @@ class ChainAdapterUnreadIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                createPrettySingleThreadPool(
-                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
-                ),
                 autoAck = true,
                 onRmqFail = {}
             ).use { reliableChainListener ->

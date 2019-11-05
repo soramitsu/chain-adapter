@@ -50,9 +50,6 @@ class ChainAdapterAuthIntegrationTest {
             ReliableIrohaChainListener(
                 environment.mapToRMQConfig(adapter.chainAdapterConfig),
                 queueName,
-                createPrettySingleThreadPool(
-                    CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
-                ),
                 autoAck = true,
                 onRmqFail = {}
             ).use { reliableChainListener ->
@@ -101,9 +98,6 @@ class ChainAdapterAuthIntegrationTest {
                 ReliableIrohaChainListener(
                     modifiedConfig,
                     queueName,
-                    createPrettySingleThreadPool(
-                        CHAIN_ADAPTER_SERVICE_NAME, "iroha-blocks-consumer"
-                    ),
                     autoAck = true,
                     onRmqFail = {}
                 )
