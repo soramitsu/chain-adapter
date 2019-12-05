@@ -36,7 +36,7 @@ class ChainAdapterIrohaFailFastIntegrationTest {
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQHOST", "localhost")
         chainAdapterContainer.addEnv(
             "CHAIN-ADAPTER_RMQPORT",
-            environment.containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT).toString()
+            environment.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT).toString()
         )
         // Set Iroha host and port
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_IROHA_HOSTNAME", "localhost")

@@ -21,7 +21,15 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh "./gradlew test --info"
+                    withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'login', passwordVariable: 'password')]) {
+                        sh """
+                            apk update && apk add docker
+                            docker login --username ${login} --password '${password}' https://nexus.iroha.tech:19004
+                            ./gradlew clean build --info
+                            ./gradlew dockerfileCreate --info
+                            ./gradlew test --info
+                           """
+                    }
                 }
             }
         }

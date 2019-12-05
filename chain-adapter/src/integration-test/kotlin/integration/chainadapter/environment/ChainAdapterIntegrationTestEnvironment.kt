@@ -81,7 +81,7 @@ class ChainAdapterIntegrationTestEnvironment(
     private val dockerfile = "$userDir/build/docker/Dockerfile"
     private val chainAdapterContextFolder = "$userDir/build/docker/"
 
-    private val rmqContainer =
+    val rmqContainer =
         KGenericContainer("nexus.iroha.tech:19004/soramitsu/rmq:3.7.18-deduplication").withExposedPorts(DEFAULT_RMQ_PORT)
 
     private val irohaAPI: IrohaAPI
