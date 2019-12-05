@@ -27,12 +27,14 @@ private const val DEFAULT_LAST_READ_BLOCK = -1L
  * @param rmqConfig - Rabbit MQ configuration
  * @param irohaQueue - name of queue to read Iroha blocks from
  * @param autoAck - enables auto acknowledgment
+ * @param strictDeduplication - turns on deduplication checks on the RMQ level.
  * @param onRmqFail - function that will be called on RMQ failure. Terminates process by default.
  */
 open class ReliableIrohaChainListener @JvmOverloads constructor(
     private val rmqConfig: RMQConfig,
     private val irohaQueue: String,
     private val autoAck: Boolean = true,
+    strictDeduplication: Boolean = false,
     private val onRmqFail: () -> Unit = {
         logger.error("RMQ failure. Exit.")
         exitProcess(1)
@@ -80,11 +82,29 @@ open class ReliableIrohaChainListener @JvmOverloads constructor(
 
     init {
         channel.exchangeDeclare(rmqConfig.irohaExchange, "fanout", true)
-        channel.queueDeclare(irohaQueue, true, false, false, null)
+        val queueArgs = if (strictDeduplication) {
+            logger.info("Strict deduplication mode is on")
+            createDeduplicationArgs()
+        } else {
+            null
+        }
+        channel.queueDeclare(irohaQueue, true, false, false, queueArgs)
         channel.queueBind(irohaQueue, rmqConfig.irohaExchange, "")
         //TODO not sure if it's enough
         channel.basicQos(1)
     }
+
+    /**
+     * Creates RabbitMQ queue arguments for deduplication
+     */
+    private fun createDeduplicationArgs() = hashMapOf<String, Any>(
+        // enable deduplication
+        Pair("x-message-deduplication", true),
+        // save deduplication data on disk rather that memory
+        Pair("x-cache-persistence", "disk"),
+        // save deduplication data 30 minutes at most
+        Pair("x-cache-ttl", 30_000 * 60)
+    )
 
     /**
      * Returns observable that may be used to define subscribers.
