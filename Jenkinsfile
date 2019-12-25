@@ -62,7 +62,7 @@ pipeline {
                         println ${tagPattern}
                         withCredentials([usernamePassword(credentialsId: 'nexus-nbc-deploy', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19000"
-                            env.TAG = ${tagPattern}
+                            env.TAG = "${tagPattern}"
                             sh "./gradlew dockerPush"
                         }
                     } else if (env.TAG_NAME ==~ /^(\d.*)/) {
