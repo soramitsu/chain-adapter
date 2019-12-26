@@ -59,7 +59,7 @@ pipeline {
                         }
                     } else if (env.TAG_NAME ==~ /^(bakong-)(.*)/) {
                         def tagPattern = (env.TAG_NAME =~ /(?<=bakong-)(\d{1,2}\.\d.*)/)[0][1]
-                        println ${tagPattern}
+                        println "${tagPattern}"
                         withCredentials([usernamePassword(credentialsId: 'nexus-nbc-deploy', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19000"
                             env.TAG = "${tagPattern}"
