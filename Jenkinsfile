@@ -1,3 +1,4 @@
+def dockerTags = ['master': 'latest', 'develop': 'dev']
 pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '20'))
@@ -28,7 +29,7 @@ pipeline {
         stage('Sonar') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'develop') {
+                    if (env.BRANCH_NAME in dockerTags) {
                         withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]){
                             sh(script: "./gradlew sonarqube -x test --configure-on-demand \
                                 -Dsonar.links.ci=${BUILD_URL} \
@@ -43,10 +44,12 @@ pipeline {
             }
         }
         stage('Push artifacts') {
+            when {
+                expression { return (env.BRANCH_NAME in dockerTags || env.TAG_NAME ) }
+            }
             steps {
                 script {
                     if (env.BRANCH_NAME ==~ /(master|develop)/) {
-                        DOCKER_TAGS = ['master': 'latest', 'develop': 'develop']
                         withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19004"
                             env.TAG = DOCKER_TAGS[env.BRANCH_NAME]
@@ -57,8 +60,8 @@ pipeline {
                             env.TAG = DOCKER_TAGS[env.BRANCH_NAME]
                             sh "./gradlew dockerPush"
                         }
-                    } else if (env.TAG_NAME ==~ /^(bakong-)(.*)/) {
-                        def tagPattern = (env.TAG_NAME =~ /(?<=bakong-)(\d{1,2}\.\d.*)/)[0][1]
+                    } else if (env.TAG_NAME ==~ /^(bakong-)(\d{1,4}\.\d.*)/) {
+                        def tagPattern = (env.TAG_NAME =~ /(?<=bakong-)(\d{1,4}\.\d.*)/)[0][1]
                         println "${tagPattern}"
                         withCredentials([usernamePassword(credentialsId: 'nexus-nbc-deploy', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19000"
@@ -66,13 +69,13 @@ pipeline {
                             sh "./gradlew dockerPush"
                         }
                     } else if (env.TAG_NAME ==~ /^(\d.*)/) {
-                        withCredentials([usernamePassword(credentialsId: 'nexus-nbc-deploy', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
-                            env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19000"
+                        withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
+                            env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19004"
                             env.TAG = env.TAG_NAME
                             sh "./gradlew dockerPush"
                         }
                     } else {
-                        println "Your branch doesn't match any pattern!"
+                        error "Your git tag doesn't match any pattern!"
                     }
                 }
             }
