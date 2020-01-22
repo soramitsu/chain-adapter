@@ -52,12 +52,12 @@ pipeline {
                     if (env.BRANCH_NAME in dockerTags) {
                         withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19004"
-                            env.TAG = DOCKER_TAGS[env.BRANCH_NAME]
+                            env.TAG = dockerTags[env.BRANCH_NAME]
                             sh "./gradlew dockerPush"
                         }
                         withCredentials([usernamePassword(credentialsId: 'nexus-nbc-deploy', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://nexus.iroha.tech:19000"
-                            env.TAG = DOCKER_TAGS[env.BRANCH_NAME]
+                            env.TAG = dockerTags[env.BRANCH_NAME]
                             sh "./gradlew dockerPush"
                         }
                     } else if (env.TAG_NAME ==~ /^bakong-\d{1,4}\.\d.*/) {
