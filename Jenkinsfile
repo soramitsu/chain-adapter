@@ -50,7 +50,7 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME in dockerTags) {
-                        withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: 'bot-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://docker.soramitsu.co.jp"
                             env.TAG = dockerTags[env.BRANCH_NAME]
                             sh "./gradlew dockerPush"
@@ -69,7 +69,7 @@ pipeline {
                             sh "./gradlew dockerPush"
                         }
                     } else if (env.TAG_NAME ==~ /^\d.*/) {
-                        withCredentials([usernamePassword(credentialsId: 'nexus-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: 'bot-soramitsu-rw', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')]) {
                             env.DOCKER_REGISTRY_URL = "https://docker.soramitsu.co.jp"
                             env.TAG = env.TAG_NAME
                             sh "./gradlew dockerPush"
