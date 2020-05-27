@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
 private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
+private const val DEDUPLICATION_HEADER = "x-deduplication-header"
 
 /**
  * Chain adapter service
@@ -87,10 +88,28 @@ class ChainAdapter(
         channel.exchangeDeclare(chainAdapterConfig.irohaExchange, BuiltinExchangeType.FANOUT, true)
         chainAdapterConfig.queuesToCreate.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             .forEach { queue ->
-                channel.queueDeclare(queue, true, false, false, null)
+                val queueArgs = if (chainAdapterConfig.strictDeduplication) {
+                    logger.info("Strict deduplication mode is on")
+                    createDeduplicationArgs()
+                } else {
+                    null
+                }
+                channel.queueDeclare(queue, true, false, false, queueArgs)
                 channel.queueBind(queue, chainAdapterConfig.irohaExchange, "")
             }
     }
+
+    /**
+     * Creates RabbitMQ queue arguments for deduplication
+     */
+    private fun createDeduplicationArgs() = hashMapOf<String, Any>(
+        // enable deduplication
+        Pair("x-message-deduplication", true),
+        // save deduplication data on disk rather that memory
+        Pair("x-cache-persistence", "disk"),
+        // save deduplication data 30 minutes at most
+        Pair("x-cache-ttl", 30_000 * 60)
+    )
 
     /**
      * Initiates and runs chain adapter
@@ -173,13 +192,16 @@ class ChainAdapter(
      */
     private fun onNewBlock(block: BlockOuterClass.Block) {
         val message = block.toByteArray()
+        val height = block.blockV1.payload.height
+        // Put deduplication header. Basically it's just a block's height
+        val messageProperties = MessageProperties.MINIMAL_PERSISTENT_BASIC.builder()
+            .headers(mapOf(Pair(DEDUPLICATION_HEADER, height.toString()))).build()
         channel.basicPublish(
             chainAdapterConfig.irohaExchange,
             "",
-            MessageProperties.MINIMAL_PERSISTENT_BASIC,
+            messageProperties,
             message
         )
-        val height = block.blockV1.payload.height
         logger.info { "Block $height pushed" }
         // Save last read block
         lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))

@@ -21,7 +21,7 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.iroha` - Iroha host and port configuration
 - `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves the last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
 - `chain-adapter.irohaCredential` - credentials of the account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
-
+- `chain-adapter.strictDeduplication` - turns on the deduplication mode on the RabbitMQ level. In most cases, this mode is not needed. Use it mode if your `chain-adapter` consumer is not idempotent. `false` by default.
 The transformation to environmental variable is quite straightforward: uppercase every letter and change dot symbol(`.`) to underscore(`_`). For example, `chain-adapter.rmqHost` transforms to `CHAIN-ADAPTER_RMQHOST`.
 
 ## How to run the service
@@ -39,7 +39,7 @@ chain-adapter:
     - {chain adapter storage}:/deploy/chain-adapter
 
 rmq:
-  image: rabbitmq:3-management
+  image: rabbitmq:3-management or nexus.iroha.tech:19004/soramitsu/rmq:3.7.18-deduplication
   container_name: rmq
   hostname: rmq
   volumes:

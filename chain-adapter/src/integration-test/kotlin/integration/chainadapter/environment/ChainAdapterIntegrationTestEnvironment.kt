@@ -22,6 +22,7 @@ import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.failure
 import integration.chainadapter.helper.ChainAdapterConfigHelper
 import integration.helper.ContainerHelper
+import integration.helper.KGenericContainer
 import integration.helper.KGenericContainerImage
 import io.grpc.ManagedChannelBuilder
 import iroha.protocol.BlockOuterClass
@@ -80,17 +81,20 @@ class ChainAdapterIntegrationTestEnvironment(
     private val dockerfile = "$userDir/build/docker/Dockerfile"
     private val chainAdapterContextFolder = "$userDir/build/docker/"
 
+    val rmqContainer =
+        KGenericContainer("nexus.iroha.tech:19004/soramitsu/rmq:3.7.18-deduplication").withExposedPorts(DEFAULT_RMQ_PORT)
+
     private val irohaAPI: IrohaAPI
 
     private val dummyIrohaConsumer: IrohaConsumer
 
     init {
         if (rmqPassword != null && rmqUsername != null) {
-            containerHelper.rmqContainer
+            rmqContainer
                 .withEnv("RABBITMQ_DEFAULT_USER", rmqUsername)
                 .withEnv("RABBITMQ_DEFAULT_PASS", rmqPassword)
         }
-        containerHelper.rmqContainer.start()
+        rmqContainer.start()
         // I don't want to see nasty Iroha logs
         irohaContainer.withLogger(null)
         irohaContainer.start()
@@ -158,8 +162,8 @@ class ChainAdapterIntegrationTestEnvironment(
      */
     fun createAdapter(): OpenChainAdapter {
         val chainAdapterConfig = chainAdapterConfigHelper.createChainAdapterConfig(
-            containerHelper.rmqContainer.containerIpAddress,
-            containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT),
+            rmqContainer.containerIpAddress,
+            rmqContainer.getMappedPort(DEFAULT_RMQ_PORT),
             username = rmqUsername,
             password = rmqPassword
         )
@@ -240,6 +244,7 @@ class ChainAdapterIntegrationTestEnvironment(
     override fun close() {
         irohaAPI.close()
         irohaContainer.close()
+        rmqContainer.stop()
         containerHelper.close()
     }
 }

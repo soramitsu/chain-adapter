@@ -31,10 +31,12 @@ public class ReliableIrohaChainListener4J implements Closeable {
         reliableIrohaChainListener = new ReliableIrohaChainListener(
                 rmqConfig,
                 irohaQueue,
-                autoAck, () -> {
-            onRMQFail.run();
-            return Unit.INSTANCE;
-        });
+                autoAck,
+                false,
+                () -> {
+                    onRMQFail.run();
+                    return Unit.INSTANCE;
+                });
     }
 
     /**

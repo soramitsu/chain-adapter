@@ -36,7 +36,7 @@ class ChainAdapterRMQFailFastIntegrationTest {
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_RMQHOST", "localhost")
         chainAdapterContainer.addEnv(
             "CHAIN-ADAPTER_RMQPORT",
-            environment.containerHelper.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT).toString()
+            environment.rmqContainer.getMappedPort(DEFAULT_RMQ_PORT).toString()
         )
         // Set Iroha host and port
         chainAdapterContainer.addEnv("CHAIN-ADAPTER_IROHA_HOSTNAME", "localhost")
@@ -64,7 +64,7 @@ class ChainAdapterRMQFailFastIntegrationTest {
         Thread.sleep(15_000)
         assertTrue(environment.containerHelper.isServiceHealthy(chainAdapterContainer))
         // Kill RMQ
-        environment.containerHelper.rmqContainer.stop()
+        environment.rmqContainer.stop()
         // Wait a little
         Thread.sleep(15_000)
         // Check that the service is dead

@@ -36,4 +36,7 @@ interface ChainAdapterConfig {
     val password: String? get() = null
     // RabbitMQ virtual host. Optional
     val virtualHost: String? get() = null
+    // Strict deduplication mode. Optional
+    val strictDeduplication: Boolean get() = false
+
 }
