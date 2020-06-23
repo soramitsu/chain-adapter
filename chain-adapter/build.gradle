@@ -41,7 +41,7 @@ soramitsu {
     projectGroup = 'soramitsu'
     docker {
         // docker tag
-        tag = System.getenv("TAG")
+        tag = System.getenv("DOCKER_TAG")
         // jar file that is used in the generated Dockerfile
         jar = new File("build/libs/app.jar")
         // the rest in configured using env variables
