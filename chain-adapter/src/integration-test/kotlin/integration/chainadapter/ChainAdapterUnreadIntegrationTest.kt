@@ -85,7 +85,7 @@ class ChainAdapterUnreadIntegrationTest {
                 assertEquals(consumedTransactions.sorted(), consumedTransactions)
                 assertEquals(
                     adapter.getLastReadBlock(),
-                    adapter.lastReadBlockProvider.getLastBlockHeight()
+                    adapter.blockProcessor.getLastBlockHeight()
                 )
             }
         }

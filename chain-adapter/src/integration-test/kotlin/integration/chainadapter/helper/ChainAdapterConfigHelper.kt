@@ -42,6 +42,8 @@ class ChainAdapterConfigHelper {
             override val queuesToCreate = "q1 , q2, q3 ,   q4,  q5   "
             override val username = username
             override val password = password
+            override val clusterEnabled = false
+            override val clusterHazelcastMembers = ""
         }
     }
 }

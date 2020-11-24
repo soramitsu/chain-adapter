@@ -5,10 +5,8 @@
 
 package integration.chainadapter
 
-import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.client.RMQConfig
 import com.d3.chainadapter.client.ReliableIrohaChainListener
-import com.d3.commons.util.createPrettySingleThreadPool
 import com.d3.commons.util.getRandomString
 import com.github.kittinunf.result.failure
 import com.rabbitmq.client.AuthenticationFailureException
@@ -68,7 +66,7 @@ class ChainAdapterAuthIntegrationTest {
                 assertEquals(consumedBlocks.sorted(), consumedBlocks)
                 assertEquals(
                     adapter.getLastReadBlock(),
-                    adapter.lastReadBlockProvider.getLastBlockHeight()
+                    adapter.blockProcessor.getLastBlockHeight()
                 )
                 assertEquals(consumedBlocks.last(), adapter.getLastReadBlock().toLong())
             }

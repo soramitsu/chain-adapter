@@ -9,6 +9,8 @@ import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.adapter.ChainAdapter
 import com.d3.chainadapter.client.RMQConfig
 import com.d3.chainadapter.config.ChainAdapterConfig
+import com.d3.chainadapter.dedup.BlockProcessor
+import com.d3.chainadapter.dedup.fs.FsBlockProcessor
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.model.IrohaCredential
 import com.d3.commons.sidechain.iroha.IrohaChainListener
@@ -17,7 +19,6 @@ import com.d3.commons.sidechain.iroha.consumer.IrohaConsumerImpl
 import com.d3.commons.sidechain.iroha.util.ModelUtil
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.sidechain.provider.FileBasedLastReadBlockProvider
-import com.d3.commons.sidechain.provider.LastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.failure
 import integration.chainadapter.helper.ChainAdapterConfigHelper
@@ -179,7 +180,7 @@ class ChainAdapterIntegrationTestEnvironment(
             chainAdapterConfig,
             queryAPI,
             irohaChainListener,
-            lastReadBlockProvider
+            FsBlockProcessor(lastReadBlockProvider)
         )
     }
 
@@ -252,5 +253,5 @@ class OpenChainAdapter(
     val chainAdapterConfig: ChainAdapterConfig,
     queryAPI: QueryAPI,
     irohaChainListener: IrohaChainListener,
-    val lastReadBlockProvider: LastReadBlockProvider
-) : ChainAdapter(chainAdapterConfig, IrohaQueryHelperImpl(queryAPI), irohaChainListener, lastReadBlockProvider)
+    val blockProcessor: BlockProcessor
+) : ChainAdapter(chainAdapterConfig, IrohaQueryHelperImpl(queryAPI), irohaChainListener, blockProcessor)

@@ -6,6 +6,9 @@
 package com.d3.chainadapter.config
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
+import com.d3.chainadapter.dedup.BlockProcessor
+import com.d3.chainadapter.dedup.fs.FsBlockProcessor
+import com.d3.chainadapter.dedup.hazelcast.HazelcastBlockProcessor
 import com.d3.commons.config.loadRawLocalConfigs
 import com.d3.commons.healthcheck.HealthCheckEndpoint
 import com.d3.commons.model.IrohaCredential
@@ -13,6 +16,9 @@ import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.impl.IrohaQueryHelperImpl
 import com.d3.commons.sidechain.provider.FileBasedLastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
+import com.hazelcast.client.HazelcastClient
+import com.hazelcast.client.config.ClientConfig
+import com.hazelcast.client.config.ClientNetworkConfig
 import io.grpc.ManagedChannelBuilder
 import jp.co.soramitsu.iroha.java.IrohaAPI
 import jp.co.soramitsu.iroha.java.QueryAPI
@@ -74,9 +80,30 @@ class ChainAdapterAppConfiguration {
     )
 
     @Bean
-    fun lastReadBlockProvider() =
-        FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath)
-
-    @Bean
     fun healthCheckEndpoint() = HealthCheckEndpoint(chainAdapterConfig.healthCheckPort)
+
+    @Bean("deduplicator")
+    fun deduplicator(chainAdapterConfig: ChainAdapterConfig): BlockProcessor {
+        return if (chainAdapterConfig.clusterEnabled) {
+            HazelcastBlockProcessor(HazelcastClient.newHazelcastClient(clientConfig(chainAdapterConfig.clusterHazelcastMembers)))
+        } else {
+            FsBlockProcessor(FileBasedLastReadBlockProvider(chainAdapterConfig.lastReadBlockFilePath))
+        }
+    }
+
+    private fun clientConfig(hazelcastMembersRaw: String?): ClientConfig {
+        val hazelcastMembers = hazelcastMembersRaw
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotEmpty() }
+                ?.toTypedArray()
+                ?: throw RuntimeException("At least one Hazelcast node must be specified")
+        return ClientConfig()
+                .setNetworkConfig(
+                        ClientNetworkConfig()
+                                .addAddress(*hazelcastMembers)
+                                .setSmartRouting(true)
+                                .setConnectionTimeout(5000)
+                )
+    }
 }

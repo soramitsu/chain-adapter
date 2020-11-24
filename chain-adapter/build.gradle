@@ -4,6 +4,7 @@
  */
 
 buildscript {
+    ext.hazelcast_version=4.1
     repositories {
         mavenCentral()
         jcenter()
@@ -26,10 +27,6 @@ apply plugin: 'application'
 
 mainClassName = 'com.d3.chainadapter.ChainAdapterMain'
 group 'com.d3.chainadapter'
-
-dependencies {
-    compile "com.github.d3ledger.notary:notary-commons:$notary_version"
-}
 
 shadowDistZip.classifier = 'shadow'
 shadowDistTar.classifier = 'shadow'
@@ -84,21 +81,20 @@ task runIrohaChainAdapter(type: JavaExec) {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/org.springframework/spring-context
-    compile group: 'org.springframework', name: 'spring-context', version: '5.1.4.RELEASE'
-    testCompile "com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version"
-    compile project(":chain-adapter-client")
-    // unit tests
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
-    // https://mvnrepository.com/artifact/org.mockito/mockito-all
-    testCompile group: 'org.mockito', name: 'mockito-all', version: '2.0.2-beta'
-    testCompile('com.nhaarman:mockito-kotlin:1.5.0') {
-        exclude group: 'org.jetbrains.kotlin'
-        exclude group: 'org.mockito'
+    implementation project(":chain-adapter-client")
+    implementation("com.github.d3ledger.notary:notary-commons:$notary_version")
+    implementation("com.hazelcast:hazelcast:$hazelcast_version")
+    implementation("org.springframework:spring-context:5.1.4.RELEASE")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test:2.4.0") {
+        exclude module: "logback-classic"
     }
-    // to run both junit4 and junit5 tests
-    testRuntime("org.junit.vintage:junit-vintage-engine:5.2.0")
+    testImplementation("org.junit.vintage:junit-vintage-engine:5.2.0")
+    testImplementation("com.github.d3ledger.notary:notary-iroha-integration-test:$notary_version")
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5.2.0')
+    testImplementation('org.junit.jupiter:junit-jupiter-engine:5.2.0')
+    testImplementation("org.mockito:mockito-all:2.0.2-beta")
+    testImplementation("io.mockk:mockk:1.10.2")
 }
 
 project.afterEvaluate {
