@@ -7,10 +7,10 @@ package com.d3.chainadapter.adapter
 
 import com.d3.chainadapter.CHAIN_ADAPTER_SERVICE_NAME
 import com.d3.chainadapter.config.ChainAdapterConfig
+import com.d3.chainadapter.dedup.BlockProcessor
 import com.d3.commons.sidechain.iroha.IrohaChainListener
 import com.d3.commons.sidechain.iroha.util.IrohaQueryHelper
 import com.d3.commons.sidechain.iroha.util.getErrorMessage
-import com.d3.commons.sidechain.provider.LastReadBlockProvider
 import com.d3.commons.util.createPrettySingleThreadPool
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
@@ -28,7 +28,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.system.exitProcess
 
-private const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
+const val BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE = 3
 
 /**
  * Chain adapter service
@@ -39,7 +39,7 @@ class ChainAdapter(
     private val chainAdapterConfig: ChainAdapterConfig,
     private val irohaQueryHelper: IrohaQueryHelper,
     private val irohaChainListener: IrohaChainListener,
-    private val lastReadBlockProvider: LastReadBlockProvider
+    private val blockProcessor: BlockProcessor
 ) : Closeable {
 
     private val connectionFactory = ConnectionFactory()
@@ -96,13 +96,12 @@ class ChainAdapter(
      * Initiates and runs chain adapter
      * @param onIrohaListenError - function that will be called on Iroha chain listener error
      */
-    fun init(onIrohaListenError: () -> Unit): Result<Unit, Exception> {
+    fun init(onIrohaListenError: (Throwable) -> Unit): Result<Unit, Exception> {
         return Result.of {
             if (chainAdapterConfig.dropLastReadBlock) {
                 logger.info { "Drop last block" }
-                lastReadBlockProvider.saveLastBlockHeight(BigInteger.ZERO)
+                blockProcessor.dropBlocksHeight()
             }
-            lastReadBlock.set(lastReadBlockProvider.getLastBlockHeight())
             logger.info { "Listening Iroha blocks" }
             initIrohaChainListener(onIrohaListenError)
             publishUnreadIrohaBlocks()
@@ -113,19 +112,16 @@ class ChainAdapter(
      * Initiates Iroha chain listener logic
      * @param onIrohaListenError - function that will be called on Iroha chain listener error
      */
-    private fun initIrohaChainListener(onIrohaListenError: () -> Unit) {
+    private fun initIrohaChainListener(onIrohaListenError: (Throwable) -> Unit) {
         irohaChainListener.getBlockObservable()
             .map { observable ->
                 observable.subscribeOn(Schedulers.from(subscriberExecutorService))
                     .subscribe({ block ->
                         publishUnreadLatch.await()
-                        // Send only not read Iroha blocks
-                        if (block.blockV1.payload.height > lastReadBlock.get().toLong()) {
-                            onNewBlock(block)
-                        }
+                        blockProcessor.onNewBlock(block, this::publishToRmq)
                     }, { ex ->
                         logger.error("Error on Iroha chain listener occurred", ex)
-                        onIrohaListenError()
+                        onIrohaListenError(ex)
                     })
             }
     }
@@ -134,14 +130,14 @@ class ChainAdapter(
      * Publishes unread blocks
      */
     private fun publishUnreadIrohaBlocks() {
-        var lastProcessedBlock = lastReadBlockProvider.getLastBlockHeight()
+        var lastProcessedBlock = blockProcessor.getLastBlockHeight()
         var donePublishing = false
         while (!donePublishing) {
             lastProcessedBlock++
             logger.info { "Try read Iroha block $lastProcessedBlock" }
 
-            irohaQueryHelper.getBlock(lastProcessedBlock.toLong()).fold({ response ->
-                onNewBlock(response.block)
+            irohaQueryHelper.getBlock(lastProcessedBlock).fold({ response ->
+                blockProcessor.onNewBlock(response.block, this::publishToRmq)
             }, { ex ->
                 if (ex is ErrorResponseException) {
                     val errorResponse = ex.errorResponse
@@ -159,6 +155,20 @@ class ChainAdapter(
         publishUnreadLatch.countDown()
     }
 
+    fun publishToRmq(block: BlockOuterClass.Block) {
+        channel.basicPublish(
+                chainAdapterConfig.irohaExchange,
+                "",
+                MessageProperties.MINIMAL_PERSISTENT_BASIC,
+                block.toByteArray()
+        )
+    }
+
+    /**
+     * Returns height of last read Iroha block
+     */
+    fun getLastReadBlock(): Long = blockProcessor.getLastBlockHeight()
+
     /**
      * Checks if no more blocks
      * @param errorResponse - error response to check
@@ -167,35 +177,11 @@ class ChainAdapter(
     private fun isNoMoreBlocksError(errorResponse: QryResponses.ErrorResponse) =
         errorResponse.errorCode == BAD_IROHA_BLOCK_HEIGHT_ERROR_CODE
 
-    /**
-     * Publishes new block to RabbitMQ
-     * @param block - Iroha block to publish
-     */
-    private fun onNewBlock(block: BlockOuterClass.Block) {
-        val message = block.toByteArray()
-        channel.basicPublish(
-            chainAdapterConfig.irohaExchange,
-            "",
-            MessageProperties.MINIMAL_PERSISTENT_BASIC,
-            message
-        )
-        val height = block.blockV1.payload.height
-        logger.info { "Block $height pushed" }
-        // Save last read block
-        lastReadBlockProvider.saveLastBlockHeight(BigInteger.valueOf(height))
-        lastReadBlock.set(BigInteger.valueOf(height))
-    }
-
-    /**
-     * Returns height of last read Iroha block
-     */
-    fun getLastReadBlock() = lastReadBlock.get()
-
     override fun close() {
         subscriberExecutorService.shutdownNow()
         irohaChainListener.close()
         channel.close()
-        connection.close()
+        channel.connection.close()
     }
 
     companion object : KLogging()

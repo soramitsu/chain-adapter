@@ -36,4 +36,8 @@ interface ChainAdapterConfig {
     val password: String? get() = null
     // RabbitMQ virtual host. Optional
     val virtualHost: String? get() = null
+    // Are many replicas of service deployed and deduplication needed?
+    val clusterEnabled: Boolean
+    // Addresses of hazelcast cluster. Meaningful only if 'clusterEnabled' is true
+    val clusterHazelcastMembers: String?
 }

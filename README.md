@@ -21,6 +21,8 @@ Chain adapter uses `chain-adapter.properties` as a default configuration file th
 - `chain-adapter.iroha` - Iroha host and port configuration
 - `chain-adapter.dropLastReadBlock` - as it was mentioned before, chain adapter saves the last read block height. It's possible to drop height to zero on a service startup by setting this value to `true`. Good for testing purposes. 
 - `chain-adapter.irohaCredential` - credentials of the account that will be used by the service to listen to Iroha blocks. The account must have `can_get_blocks` permission.
+- `chain-adapter.clusterEnabled` - `true` if expected to run multiple instances of the service and `false` otherwise. If `true` Iroha blocks will be deduplicated. Default value is `false`.
+- `chain-adapter.clusterHazelcastMembers` - comma separated list of Hazelcast's node addresses in format `host1:port1,host2:port2`. Required only if `chain-adapter.clusterEnabled` is `true`.
 
 The transformation to environmental variable is quite straightforward: uppercase every letter and change dot symbol(`.`) to underscore(`_`). For example, `chain-adapter.rmqHost` transforms to `CHAIN-ADAPTER_RMQHOST`.
 
