@@ -14,9 +14,14 @@ import java.util.concurrent.TimeUnit
 const val PROCESSED_BLOCK_ACCESS_KEY = "processed-block-numbers"
 
 /**
- * How long we wait to acquire exclusive lock. If timeout exceed, then exception thrown
+ * How long to wait for an exclusive lock. If the timeout is exceeded, an exception is thrown
  */
 const val LOCK_AWAITING_TIMEOUT_SECONDS = 30L
+
+/**
+ * How many seconds can an exclusive lock be held
+ */
+const val MAX_LOCK_DURATION_SECONDS = 10L
 
 /**
  * This implementation sends new block to RMQ only if it was not processed before by this or another
@@ -66,7 +71,11 @@ class HazelcastBlockProcessor(private val hazelcastInstance: HazelcastInstance) 
     private fun pessimisticLock (exec : () -> Unit) {
         var locked = false
         try {
-            locked = processedBlockNumber.tryLock(PROCESSED_BLOCK_ACCESS_KEY, LOCK_AWAITING_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            locked = processedBlockNumber.tryLock(
+                    PROCESSED_BLOCK_ACCESS_KEY,
+                    LOCK_AWAITING_TIMEOUT_SECONDS, TimeUnit.SECONDS,
+                    MAX_LOCK_DURATION_SECONDS, TimeUnit.SECONDS
+            )
             if (locked) {
                 exec()
             } else {

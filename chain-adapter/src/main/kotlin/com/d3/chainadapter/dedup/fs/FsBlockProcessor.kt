@@ -17,11 +17,11 @@ class FsBlockProcessor(
 
     private val lastReadBlock = AtomicLong(0)
 
-    override fun onNewBlock(block: Block, action : (block: Block) -> Unit) {
+    override fun onNewBlock(block: Block, publish : (block: Block) -> Unit) {
         // Send only not read Iroha blocks
         val newBlockHeight = block.blockV1.payload.height
         if (newBlockHeight > lastReadBlock.get()) {
-            action.invoke(block)
+            publish.invoke(block)
             logger.info { "Block $newBlockHeight pushed" }
             // Save last read block
             setBlockHeight(newBlockHeight)
